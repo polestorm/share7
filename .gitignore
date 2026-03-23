@@ -1,0 +1,13 @@
+dcu/
+program/
+tests/dcu/
+tests/program/
+*.dcu
+*.exe
+*.~*
+__history/
+__recovery/
+source/Share7.res
+source/Share7.Icon.res
+source/*.dproj.local
+scripts/auth.bat

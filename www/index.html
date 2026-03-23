@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Share7 - Zero-config P2P File Sync</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Encode+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<nav id="navbar">
+  <div class="nav-inner">
+    <a href="#hero" class="nav-logo">Share<span class="accent">7</span></a>
+    <div class="nav-links">
+      <a href="#features">Features</a>
+      <a href="#how-it-works">How it works</a>
+      <a href="#download">Download</a>
+    </div>
+  </div>
+</nav>
+
+<section id="hero">
+  <div class="container">
+    <h1>Share<span class="accent">7</span></h1>
+    <p class="tagline">Drop it in a folder. Run it. Files sync.</p>
+    <p class="subtitle">Zero-config peer-to-peer file synchronization over your local WiFi network.</p>
+    <a href="#download" class="btn">Download</a>
+  </div>
+</section>
+
+<section id="features">
+  <div class="container">
+    <h2>Why Share7</h2>
+    <div class="features-grid">
+
+      <div class="feature-card">
+        <div class="feature-icon">$0</div>
+        <h3>Always free</h3>
+        <p>No license fees, no subscriptions, no hidden costs. Free to use forever.</p>
+      </div>
+
+      <div class="feature-card">
+        <div class="feature-icon">&darr;</div>
+        <h3>No installation</h3>
+        <p>Single executable. No installer, no registry entries, no admin rights needed. Just run it.</p>
+      </div>
+
+      <div class="feature-card">
+        <div class="feature-icon">~1 MB</div>
+        <h3>Small footprint</h3>
+        <p>Tiny executable, minimal memory usage. No background services, no tray icons, no bloat.</p>
+      </div>
+
+      <div class="feature-card">
+        <div class="feature-icon">&lt;1s</div>
+        <h3>Fast</h3>
+        <p>Native compiled code. Files stream over TCP in 64 KB chunks with no overhead.</p>
+      </div>
+
+      <div class="feature-card">
+        <div class="feature-icon">&#x229E;</div>
+        <h3>Windows</h3>
+        <p>Built specifically for Windows. Uses native APIs for real-time file system monitoring.</p>
+      </div>
+
+      <div class="feature-card">
+        <div class="feature-icon">&#x2205;</div>
+        <h3>Zero config</h3>
+        <p>No servers, no accounts, no port forwarding. Peers find each other automatically via UDP broadcast.</p>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<section id="how-it-works">
+  <div class="container">
+    <h2>How it works</h2>
+    <div class="steps">
+
+      <div class="step">
+        <div class="step-num">1</div>
+        <div class="step-body">
+          <h3>Drop &amp; run</h3>
+          <p>Copy <code>share7.exe</code> into any folder you want to sync. Double-click it. That's the setup.</p>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-num">2</div>
+        <div class="step-body">
+          <h3>Discovery</h3>
+          <p>Share7 announces itself on the local network via UDP broadcast on port 7731. Other instances respond immediately. No manual IP entry needed.</p>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-num">3</div>
+        <div class="step-body">
+          <h3>Sync</h3>
+          <p>File lists are exchanged over TCP (port 7732). Newer files win. Conflicts are resolved by SHA-256 comparison. Deletions propagate explicitly &mdash; a missing file is never assumed deleted.</p>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-num">4</div>
+        <div class="step-body">
+          <h3>Watch</h3>
+          <p>The file system is monitored in real time using Windows <code>ReadDirectoryChangesW</code>. Changes are detected instantly and pushed to all connected peers.</p>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!--
+<section id="technical">
+  <div class="container">
+    <h2>Under the hood</h2>
+    <div class="tech-grid">
+
+      <div class="tech-card">
+        <h3>Native Delphi</h3>
+        <p>Written in Object Pascal (Delphi). Compiles to a single native Windows executable &mdash; no runtime, no .NET, no JVM, no interpreter.</p>
+      </div>
+
+      <div class="tech-card">
+        <h3>mORMot2 powered</h3>
+        <p>Networking and cryptography built on <a href="https://github.com/synopse/mORMot2" target="_blank" rel="noopener">mORMot2</a> &mdash; a battle-tested open-source Delphi framework. UDP server, TCP sockets, and SHA-256 hashing all come from mORMot2.</p>
+      </div>
+
+      <div class="tech-card">
+        <h3>Binary protocol</h3>
+        <p>Custom binary wire protocol. No JSON parsing, no HTTP overhead. Discovery packets are 16+ bytes. File transfers stream raw data in 64 KB chunks.</p>
+      </div>
+
+      <div class="tech-card">
+        <h3>Built with Claude Code</h3>
+        <p>Developed using <a href="https://claude.ai/code" target="_blank" rel="noopener">Claude Code</a> &mdash; Anthropic's AI coding agent. Architecture, protocol design, and implementation were pair-programmed with AI assistance.</p>
+      </div>
+
+    </div>
+
+    <div class="tech-specs">
+      <h3>Specifications</h3>
+      <table>
+        <tr><td>Platform</td><td>Windows (Win32)</td></tr>
+        <tr><td>Discovery port</td><td>UDP 7731 (broadcast)</td></tr>
+        <tr><td>Transfer port</td><td>TCP 7732</td></tr>
+        <tr><td>Hash algorithm</td><td>SHA-256</td></tr>
+        <tr><td>Conflict resolution</td><td>Newest file wins, SHA-256 tiebreaker</td></tr>
+        <tr><td>File watching</td><td>ReadDirectoryChangesW (real-time)</td></tr>
+        <tr><td>Dependencies</td><td>mORMot2 (statically linked)</td></tr>
+      </table>
+    </div>
+
+  </div>
+</section>
+-->
+
+<section id="download">
+  <div class="container download-section">
+    <h2>Get Share7</h2>
+    <p>One file. One click. Files in sync.</p>
+    <a href="downloads/Share7.zip" class="btn btn-large">Download Share7<span style="color:#ffd666">.zip</span></a>
+    <a href="downloads/Share7.exe" class="btn btn-large btn-secondary">Download Share7.exe</a>
+    <span class="download-meta">Windows &middot; ZIP ~400 KB / EXE ~1 MB &middot; No installation required</span>
+  </div>
+</section>
+
+<footer>
+  <div class="container">
+    <p>Share7 &mdash; peer-to-peer file sync for local networks. Author: <a href="mailto:michal@glebowski.pl">michal@glebowski.pl</a></p>
+  </div>
+</footer>
+
+<script>
+document.querySelectorAll('a[href^="#"]').forEach(link => {
+  link.addEventListener('click', e => {
+    e.preventDefault();
+    const target = document.querySelector(link.getAttribute('href'));
+    if (target) target.scrollIntoView({ behavior: 'smooth' });
+  });
+});
+
+window.addEventListener('scroll', () => {
+  document.getElementById('navbar').classList.toggle('scrolled', window.scrollY > 40);
+});
+</script>
+
+</body>
+</html>
