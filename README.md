@@ -106,7 +106,7 @@ Peers that go silent for 30 s are considered gone.
 
 ## Building from Source
 
-Requires **Embarcadero RAD Studio / Delphi** and [mORMot2](https://github.com/synopse/mORMot2) checked out alongside this repo.
+Requires **Embarcadero RAD Studio / Delphi 12/13** and [mORMot2](https://github.com/synopse/mORMot2) checked out alongside this repo.
 
 ```bash
 # From the source\ directory
