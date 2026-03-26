@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Share7 - Zero-config P2P File Sync</title>
-  <meta name="description" content="Share7 is a free, zero-config peer-to-peer file synchronization tool for Windows built in Delphi. Drop it in a folder, run it — files sync automatically over your local WiFi network. No installation, no accounts, ~300 KB.">
+  <meta name="description" content="Share7 is a free, zero-config peer-to-peer file synchronization tool for Windows built in Delphi. Drop it in a folder, run it — files sync automatically over your local WiFi network. No installation, no accounts, ~1 MB.">
   <link rel="canonical" href="http://polestorm.pl/share7/">
   <meta property="og:type" content="website">
   <meta property="og:title" content="Share7 - Zero-config P2P File Sync">
@@ -114,9 +114,11 @@
       </div>
 
       <div class="feature-card">
-        <div class="feature-icon">~300 KB</div>
+        <!-- Deployed as ~1 MB (modern Delphi build) because Windows Defender
+             flagged the smaller ~300 KB (Delphi 7) build as a false-positive trojan. -->
+        <div class="feature-icon">~1 MB</div>
         <h3>Small footprint</h3>
-        <p>Tiny executable, minimal memory usage. No background services, no tray icons, no bloat.</p>
+        <p>Size matters! Tiny executable, minimal memory usage. No background services, no tray icons, no bloat.</p>
       </div>
 
       <div class="feature-card">

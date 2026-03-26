@@ -11,7 +11,7 @@
 ![Windows 7+](https://img.shields.io/badge/Windows_7%2B-0078D4?logo=windows&logoColor=white)
 ![Delphi](https://img.shields.io/badge/Object%20Pascal-Delphi-EE1F35?logo=delphi&logoColor=white)
 ![Free](https://img.shields.io/badge/free-forever-2d6cdf)
-![Size](https://img.shields.io/badge/size-~300%20KB-555)
+![Size](https://img.shields.io/badge/size-~300%20KB%20%2F%20~1%20MB-555)
 
 [**Website**](http://polestorm.pl/share7/)
 
@@ -29,7 +29,7 @@ Share7 is a tiny Windows console application that syncs files between computers 
 |---|---|
 | **Always free** | No license fees, no subscriptions, no hidden costs — ever |
 | **No installation** | Single `.exe` — no installer, no registry entries, no admin rights |
-| **~1 MB** | Native compiled binary. No .NET, no JVM, no runtime to install |
+| **~300 KB / ~1 MB** | Native compiled binary. No .NET, no JVM, no runtime to install. The download is the ~1 MB build — the ~300 KB variant triggers Windows Defender false positives |
 | **Zero config** | Peers discover each other automatically via UDP broadcast |
 | **Real-time** | File changes detected instantly using `ReadDirectoryChangesW` |
 | **Safe deletions** | Only explicit deletes propagate — a missing file is never assumed gone |
@@ -144,5 +144,5 @@ See `dcc32.bat` / `dcc32_d7.bat` for compiler paths and mORMot2 unit references.
 ---
 
 <div align="center">
-Always free &nbsp;·&nbsp; No installation &nbsp;·&nbsp; Windows only &nbsp;·&nbsp; ~300 KB
+Always free &nbsp;·&nbsp; No installation &nbsp;·&nbsp; Windows only &nbsp;·&nbsp; ~300 KB / ~1 MB
 </div>
