@@ -108,14 +108,31 @@ Peers that go silent for 30 s are considered gone.
 
 ## Building from Source
 
-Requires **Embarcadero RAD Studio / Delphi 12/13** and [mORMot2](https://github.com/synopse/mORMot2) checked out alongside this repo.
+The repository contains two source variants. Both implement identical sync logic, protocol, and algorithms — the differences are purely syntactic.
+
+| | `source/` (Modern) | `source_D7/` (Compatible) |
+|---|---|---|
+| **Compiler** | Delphi 12/13 | Delphi 7 — 2024 (also compiles with 12/13) |
+| **EXE size** | ~1 MB | ~300 KB |
+| **Variables** | Inline declarations (`var X := ...`) | Traditional `var` section |
+| **Closures** | Anonymous methods (`reference to procedure`) | Helper classes with method pointers |
+| **Records** | Methods on records (`Engine.SyncWithPeer`) | Standalone procedures (`SyncWithPeer(Engine, ...)`) |
+| **Arrays** | `Arr := Arr + [item]`, `Delete(Arr, I, 1)` | Manual `SetLength` + shift loops |
+| **Strings** | TStringHelper (`.ToLower`, `.Replace`) | Classic functions (`StringReplace`, `Trim`) |
+
+Both versions require [mORMot2](https://github.com/synopse/mORMot2) checked out alongside this repo.
 
 ```bash
-# From the source\ directory
-dcc32.exe -B "-NSSystem;Winapi" -E"..\program" -NU"..\dcu" Share7.dpr
+# Modern (Delphi 12/13) — from repo root
+build.bat            # release (default)
+build.bat debug      # debug
+
+# Compatible (Delphi 7+) — from repo root
+build_d7.bat         # release (default)
+build_d7.bat debug   # debug
 ```
 
-See `dcc32.bat` for full search path setup and mORMot2 unit references.
+See `dcc32.bat` / `dcc32_d7.bat` for compiler paths and mORMot2 unit references.
 
 ## Credits
 
@@ -126,5 +143,5 @@ See `dcc32.bat` for full search path setup and mORMot2 unit references.
 ---
 
 <div align="center">
-Always free &nbsp;·&nbsp; No installation &nbsp;·&nbsp; Windows only &nbsp;·&nbsp; ~1 MB
+Always free &nbsp;·&nbsp; No installation &nbsp;·&nbsp; Windows only &nbsp;·&nbsp; ~300 KB
 </div>
