@@ -9,6 +9,9 @@ uses
   mormot.core.os,
   Share7.Core.Types;
 
+const
+  FILE_LIST_DIRECTORY = 1; // not defined in Delphi 7 Windows unit
+
 type
   TFileChangeEvent = procedure(AAction: TFileAction; const ARelPath: RawUtf8) of object;
 

@@ -155,7 +155,7 @@ begin
   end;
 
   // Trim to actual size
-  SetLength(Result, PByte(P) - PByte(@Result[1]));
+  SetLength(Result, Cardinal(P) - Cardinal(@Result[1]));
 end;
 
 function DecodeFileList(const AData: RawByteString): TFileEntries;

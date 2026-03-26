@@ -67,8 +67,13 @@ function FormatFileSize(ASize: Int64): RawUtf8;
 var
   SavedSep: Char;
 begin
+  {$IF CompilerVersion >= 20.0} // Delphi 2009+
+  SavedSep := FormatSettings.DecimalSeparator;
+  FormatSettings.DecimalSeparator := '.';
+  {$ELSE}
   SavedSep := DecimalSeparator;
   DecimalSeparator := '.';
+  {$IFEND}
   try
     if ASize < 1024 then
       Result := RawUtf8(IntToStr(ASize) + ' B')
@@ -79,7 +84,11 @@ begin
     else
       Result := RawUtf8(Format('%.1f GB', [ASize / (1024 * 1024 * 1024)]));
   finally
+    {$IF CompilerVersion >= 20.0}
+    FormatSettings.DecimalSeparator := SavedSep;
+    {$ELSE}
     DecimalSeparator := SavedSep;
+    {$IFEND}
   end;
 end;
 
