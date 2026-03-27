@@ -13,7 +13,7 @@
 ![Free](https://img.shields.io/badge/free-forever-2d6cdf)
 ![Size](https://img.shields.io/badge/size-~300%20KB%20%2F%20~1%20MB-555)
 
-[**Website**](https://polestorm.pl/share7/)
+[**Go to website**](https://polestorm.pl/share7/)
 
 </div>
 
@@ -29,7 +29,7 @@ Share7 is a tiny Windows console application that syncs files between computers 
 |---|---|
 | **Always free** | No license fees, no subscriptions, no hidden costs — ever |
 | **No installation** | Single `.exe` — no installer, no registry entries, no admin rights |
-| **~300 KB / ~1 MB** | Native compiled binary. No .NET, no JVM, no runtime to install. The download is the ~1 MB build — the ~300 KB variant triggers Windows Defender false positives |
+| **300 KB / 1 MB** | Native compiled binary. No .NET, no JVM, no runtime to install. The download is the ~1 MB build — the ~300 KB variant triggers Windows Defender false positives |
 | **Zero config** | Peers discover each other automatically via UDP broadcast |
 | **Real-time** | File changes detected instantly using `ReadDirectoryChangesW` |
 | **Safe deletions** | Only explicit deletes propagate — a missing file is never assumed gone |
@@ -47,7 +47,7 @@ Share7.exe [options]
   -sound          Beep when a peer is found or lost
 ```
 
-On first run, Share7 picks a friendly two-word name like `curious-hedgehog` or `black-stone`. You can override it with `-name:` or let it fall back to your Windows username.
+On first run, Share7 uses your Windows computer name. If that's not available, it generates a random two-word name like `fast-fox` or `calm-owl`. You can override it with `-name:`.
 
 ## How It Works
 
@@ -83,7 +83,7 @@ Wire format per packet:
 | `smkAnnounceAck` | Unicast reply when a new peer is spotted |
 | `smkGoodbye` | Sent on clean shutdown |
 
-Peers that go silent for 30 s are considered gone.
+Peers that go silent for 15 s are considered gone.
 
 ### TCP Transfer — port 7732
 

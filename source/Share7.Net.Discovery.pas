@@ -14,7 +14,7 @@ type
 
   /// UDP broadcast peer discovery thread.
   /// Broadcasts smkAnnounce every ~5s, replies smkAnnounceAck to new peers,
-  /// removes peers not seen for 30s.
+  /// removes peers not seen for 15s.
   /// Uses raw TNetSocket UDP instead of TUdpServerThread to avoid
   /// pulling in the heavy mormot.net.server unit.
   TDiscoveryThread = class(TThread)
