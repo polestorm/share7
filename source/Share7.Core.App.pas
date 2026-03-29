@@ -13,7 +13,8 @@ uses
   Share7.Net.Transfer,
   Share7.Fs.Scanner,
   Share7.Fs.Watcher,
-  Share7.Sync.Engine;
+  Share7.Sync.Engine,
+  Share7.Clipboard;
 
 type
   TShare7App = class
@@ -24,6 +25,7 @@ type
     FDiscovery: TDiscoveryThread;
     FTcpServer: TTcpServerThread;
     FWatcher: TFileWatcher;
+    FClipboardWatcher: TClipboardWatcher;
     FSyncEngine: TSyncEngine;
     FRunning: Boolean;
     FLastPeerCount: Integer;
@@ -37,6 +39,8 @@ type
     procedure OnFileChange(AAction: TFileAction; const ARelPath: RawUtf8);
     procedure OnDeleteNotify(const ARelPath: RawUtf8);
     procedure OnChangesNotify(const APeerIP: RawUtf8; ATcpPort: Word);
+    procedure OnLocalClipboardChanged(const AText: RawUtf8);
+    procedure OnRemoteClipboardReceived(const AText: RawUtf8);
     procedure DoSyncWithPeer(const APeer: TPeerInfo);
     procedure RescanAndUpdateManifest;
   public
@@ -219,6 +223,26 @@ begin
     end;
 end;
 
+procedure TShare7App.OnLocalClipboardChanged(const AText: RawUtf8);
+begin
+  var Peers := FDiscovery.GetPeerList;
+  for var I := 0 to High(Peers) do
+    TTransferClient.SendClipboardNotify(Peers[I].IP, Peers[I].TcpPort, AText);
+  ConsoleWrite(FormatUtf8('[%] ' + SCaptionClipboardSent,
+    [TimeStampStr, Length(AText)]), ccDarkGray);
+end;
+
+procedure TShare7App.OnRemoteClipboardReceived(const AText: RawUtf8);
+begin
+  if FClipboardWatcher <> nil then
+    FClipboardWatcher.SetReceivedHash(ClipboardHash(AText));
+  WriteClipboardText(AText);
+  ConsoleWrite(FormatUtf8('[%] ' + SCaptionClipboardReceived,
+    [TimeStampStr, Length(AText)]), ccLightCyan);
+  if FConfig.Sound then
+    MessageBeep(MB_OK);
+end;
+
 procedure TShare7App.RescanAndUpdateManifest;
 begin
   var NewEntries: TFileEntries;
@@ -276,6 +300,8 @@ begin
     @FEntries, @FEntriesLock);
   FTcpServer.OnDeleteNotify := OnDeleteNotify;
   FTcpServer.OnChangesNotify := OnChangesNotify;
+  if FConfig.Clipboard then
+    FTcpServer.OnClipboardNotify := OnRemoteClipboardReceived;
 
   // Start UDP discovery
   FDiscovery := TDiscoveryThread.Create(FConfig.Name, FConfig.UdpPort, FConfig.TcpPort);
@@ -286,6 +312,13 @@ begin
   FWatcher := TFileWatcher.Create(FConfig.Folder);
   FWatcher.OnChange := OnFileChange;
   FSyncEngine.Watcher := FWatcher;
+
+  // Start clipboard watcher (if enabled)
+  if FConfig.Clipboard then
+  begin
+    FClipboardWatcher := TClipboardWatcher.Create;
+    FClipboardWatcher.OnChanged := OnLocalClipboardChanged;
+  end;
 
   // Install Ctrl+C handler
   SetConsoleCtrlHandler(@ConsoleCtrlHandler, True);
@@ -319,6 +352,13 @@ begin
   // Send goodbye before tearing down the socket
   if FDiscovery <> nil then
     FDiscovery.SendGoodbye;
+
+  if FClipboardWatcher <> nil then
+  begin
+    FClipboardWatcher.Terminate;
+    FClipboardWatcher.WaitFor;
+    FreeAndNil(FClipboardWatcher);
+  end;
 
   if FWatcher <> nil then
   begin

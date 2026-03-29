@@ -52,6 +52,7 @@ const
   TCP_REQUEST_FILE      = 2;
   TCP_NOTIFY_DELETE     = 3;
   TCP_NOTIFY_CHANGES    = 4;
+  TCP_NOTIFY_CLIPBOARD  = 5;
 
 function FormatFileSize(ASize: Int64): RawUtf8;
 function TimeStampStr: RawUtf8;

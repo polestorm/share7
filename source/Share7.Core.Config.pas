@@ -13,6 +13,7 @@ type
     UdpPort: Word;
     TcpPort: Word;
     Sound: Boolean;
+    Clipboard: Boolean;
     procedure Init;
   end;
 
@@ -84,6 +85,7 @@ begin
   end;
 
   Sound := Executable.Command.Option('sound', 'play sounds on peer events');
+  Clipboard := Executable.Command.Option('clipboard', 'share clipboard with peers');
 
   if not IsValidName(Name) then
     Name := GenerateRandomName;

@@ -59,6 +59,10 @@ var
   SCaptionReady:        RawUtf8;
   SCaptionShuttingDown: RawUtf8;
 
+  // Clipboard
+  SCaptionClipboardSent:     RawUtf8;
+  SCaptionClipboardReceived: RawUtf8;
+
   // Errors
   SCaptionDenied: RawUtf8;
   SCaptionFatal:  RawUtf8;
@@ -95,6 +99,9 @@ begin
   SCaptionReady        := StringToUtf8(SGlyphReady + ' Ready');
   SCaptionShuttingDown := StringToUtf8(SGlyphShuttingDown + ' Stopping...');
 
+  SCaptionClipboardSent     := StringToUtf8(SGlyphSync + ' Clipboard sent (% bytes)');
+  SCaptionClipboardReceived := StringToUtf8(SGlyphSync + ' Clipboard received (% bytes)');
+
   SCaptionDenied := StringToUtf8(SGlyphWarning + ' % - clock drift %s exceeds %s limit');
   SCaptionFatal  := StringToUtf8(SGlyphFileDeleted + ' %');
   {$ELSE}
@@ -121,6 +128,9 @@ begin
   SCaptionFoundFiles   := 'Found % files';
   SCaptionReady        := 'Ready. Press Ctrl+C to stop.';
   SCaptionShuttingDown := 'Shutting down...';
+
+  SCaptionClipboardSent     := 'Clipboard sent (% bytes)';
+  SCaptionClipboardReceived := 'Clipboard received (% bytes)';
 
   SCaptionDenied := 'DENIED sync with % - clock drift %s exceeds %s limit';
   SCaptionFatal  := 'FATAL: %';

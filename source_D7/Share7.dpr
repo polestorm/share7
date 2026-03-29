@@ -30,7 +30,8 @@ uses
   Share7.Net.Discovery in 'Share7.Net.Discovery.pas',
   Share7.Net.Transfer in 'Share7.Net.Transfer.pas',
   Share7.Sync.Engine in 'Share7.Sync.Engine.pas',
-  Share7.Core.Captions in 'Share7.Core.Captions.pas';
+  Share7.Core.Captions in 'Share7.Core.Captions.pas',
+  Share7.Clipboard in 'Share7.Clipboard.pas';
 
 var
   App: TShare7App;

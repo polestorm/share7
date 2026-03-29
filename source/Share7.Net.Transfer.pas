@@ -13,6 +13,7 @@ uses
 type
   TOnDeleteNotify = procedure(const ARelPath: RawUtf8) of object;
   TOnChangesNotify = procedure(const APeerIP: RawUtf8; ATcpPort: Word) of object;
+  TOnClipboardNotify = procedure(const AText: RawUtf8) of object;
   /// Progress callback: received bytes, total bytes.
   TTransferProgress = reference to procedure(AReceived, ATotal: Int64);
 
@@ -26,10 +27,12 @@ type
     FEntriesLock: ^TLightLock;
     FOnDeleteNotify: TOnDeleteNotify;
     FOnChangesNotify: TOnChangesNotify;
+    FOnClipboardNotify: TOnClipboardNotify;
     procedure HandleClient(AClient: TCrtSocket);
     procedure HandleRequestFileList(AClient: TCrtSocket);
     procedure HandleRequestFile(AClient: TCrtSocket);
     procedure HandleNotifyDelete(AClient: TCrtSocket);
+    procedure HandleNotifyClipboard(AClient: TCrtSocket);
   protected
     procedure Execute; override;
   public
@@ -38,6 +41,7 @@ type
     procedure Shutdown;
     property OnDeleteNotify: TOnDeleteNotify read FOnDeleteNotify write FOnDeleteNotify;
     property OnChangesNotify: TOnChangesNotify read FOnChangesNotify write FOnChangesNotify;
+    property OnClipboardNotify: TOnClipboardNotify read FOnClipboardNotify write FOnClipboardNotify;
   end;
 
   /// Client-side TCP operations for syncing with a peer.
@@ -49,6 +53,8 @@ type
     class procedure SendDeleteNotify(const AIP: RawUtf8; APort: Word;
       const ARelPath: RawUtf8); static;
     class procedure SendChangesNotify(const AIP: RawUtf8; APort: Word); static;
+    class procedure SendClipboardNotify(const AIP: RawUtf8; APort: Word;
+      const AText: RawUtf8); static;
   end;
 
 implementation
@@ -149,6 +155,7 @@ begin
         if Assigned(FOnChangesNotify) then
           FOnChangesNotify(AClient.RemoteIP, 0);
       end;
+    TCP_NOTIFY_CLIPBOARD: HandleNotifyClipboard(AClient);
   end;
 end;
 
@@ -365,6 +372,44 @@ begin
   finally
     Sock.Free;
   end;
+end;
+
+class procedure TTransferClient.SendClipboardNotify(const AIP: RawUtf8; APort: Word;
+  const AText: RawUtf8);
+begin
+  var Sock := ConnectToPeer(AIP, APort);
+  if Sock = nil then
+    Exit;
+  try
+    var Cmd: Byte := TCP_NOTIFY_CLIPBOARD;
+    SendRaw(Sock, @Cmd, 1);
+
+    var DataLen: Cardinal := Length(AText);
+    SendRaw(Sock, @DataLen, SizeOf(DataLen));
+    if DataLen > 0 then
+      SendRaw(Sock, @AText[1], DataLen);
+  finally
+    Sock.Free;
+  end;
+end;
+
+procedure TTcpServerThread.HandleNotifyClipboard(AClient: TCrtSocket);
+begin
+  var DataLen: Cardinal;
+  if not RecvExact(AClient, @DataLen, SizeOf(DataLen)) then
+    Exit;
+  if DataLen = 0 then
+    Exit;
+  if DataLen > 100 * 1024 * 1024 then // 100 MB sanity limit
+    Exit;
+
+  var Data: RawByteString;
+  SetLength(Data, DataLen);
+  if not RecvExact(AClient, @Data[1], DataLen) then
+    Exit;
+
+  if Assigned(FOnClipboardNotify) then
+    FOnClipboardNotify(RawUtf8(Data));
 end;
 
 end.

@@ -13,6 +13,7 @@ type
     UdpPort: Word;
     TcpPort: Word;
     Sound: Boolean;
+    Clipboard: Boolean;
   end;
 
 procedure InitConfig(var AConfig: TShare7Config);
@@ -92,6 +93,7 @@ begin
   end;
 
   AConfig.Sound := Executable.Command.Option('sound', 'play sounds on peer events');
+  AConfig.Clipboard := Executable.Command.Option('clipboard', 'share clipboard with peers');
 
   if not IsValidName(AConfig.Name) then
     AConfig.Name := GenerateRandomName;
