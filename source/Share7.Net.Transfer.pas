@@ -323,6 +323,7 @@ begin
     // Write to temp file, then rename
     var TmpPath := ADestPath + '.share7tmp';
     var Stream := TFileStream.Create(TmpPath, fmCreate);
+    var TransferOk := True;
     try
       var Buf: array[0..TRANSFER_BUFFER_SIZE - 1] of Byte;
       var Remaining := FileSize;
@@ -332,7 +333,10 @@ begin
         if Remaining < ToRead then
           ToRead := Integer(Remaining);
         if not RecvExact(Sock, @Buf[0], ToRead) then
-          Exit;
+        begin
+          TransferOk := False;
+          Break;
+        end;
         Stream.WriteBuffer(Buf[0], ToRead);
         Dec(Remaining, ToRead);
         if Assigned(AOnProgress) then
@@ -340,6 +344,12 @@ begin
       end;
     finally
       Stream.Free;
+    end;
+
+    if not TransferOk then
+    begin
+      System.SysUtils.DeleteFile(TmpPath);
+      Exit;
     end;
 
     // Atomic rename
