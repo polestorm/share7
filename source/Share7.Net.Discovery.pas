@@ -65,7 +65,7 @@ begin
   FTcpPort := ATcpPort;
   FIdleTicks := 0;
   FSock := nil;
-  inherited Create(False);
+  inherited Create(True);
 end;
 
 destructor TDiscoveryThread.Destroy;

@@ -11,6 +11,10 @@ uses
   Share7.Fs.Watcher;
 
 type
+  TSyncLogProc = procedure(const AMsg: RawUtf8) of object;
+  TSyncProgressProc = reference to procedure(const ARelPath: RawUtf8;
+    AReceived, ATotal: Int64);
+
   TSyncStats = record
     Received: Integer;
     Sent: Integer;
@@ -25,6 +29,8 @@ type
     Entries: ^TFileEntries;
     EntriesLock: ^TLightLock;
     Watcher: TFileWatcher;
+    OnLog: TSyncLogProc;
+    OnProgress: TSyncProgressProc;
 
     /// Perform initial sync with a peer: pull files newer on peer.
     function SyncWithPeer(const APeerIP: RawUtf8; APeerPort: Word;
@@ -51,28 +57,7 @@ uses
 
 const
   SecsPerDay = 86400;
-  PROGRESS_BAR_WIDTH = 20;
   PROGRESS_MIN_SIZE = 256 * 1024; // show progress bar for files >= 256 KB
-
-procedure WriteProgress(const ARelPath: RawUtf8; AReceived, ATotal: Int64);
-begin
-  if ATotal <= 0 then
-    Exit;
-  var Pct := (AReceived * 100) div ATotal;
-  var Filled := (AReceived * PROGRESS_BAR_WIDTH) div ATotal;
-  var Bar: RawUtf8;
-  SetLength(Bar, PROGRESS_BAR_WIDTH);
-  for var J := 1 to PROGRESS_BAR_WIDTH do
-    if J <= Filled then
-      Bar[J] := '#'
-    else
-      Bar[J] := '.';
-  var Line := FormatUtf8(SCaptionFileProgress, [ARelPath, Bar, Pct, '%']);
-  // Pad with spaces to overwrite previous longer line
-  while Length(Line) < 78 do
-    Line := Line + ' ';
-  ConsoleWriteRaw(#13 + Line, True);
-end;
 
 { TSyncStats }
 
@@ -134,15 +119,15 @@ begin
       if Watcher <> nil then
         Watcher.SuppressPath(RelPath);
       try
-        var ShowProgress := RemoteEntries[I].Size >= PROGRESS_MIN_SIZE;
         var ProgressCb: TTransferProgress := nil;
-        if ShowProgress then
+        if Assigned(OnProgress) and (RemoteEntries[I].Size >= PROGRESS_MIN_SIZE) then
         begin
           var ProgressPath := RelPath; // capture for closure
+          var ProgressRef := OnProgress; // capture callback
           ProgressCb :=
             procedure(AReceived, ATotal: Int64)
             begin
-              WriteProgress(ProgressPath, AReceived, ATotal);
+              ProgressRef(ProgressPath, AReceived, ATotal);
             end;
         end;
 
@@ -157,9 +142,6 @@ begin
             RelPath, DestPath, ProgressCb);
         end;
 
-        if ShowProgress then
-          ConsoleWriteRaw(#13); // move past progress line
-
         if Downloaded then
         begin
           // Preserve original modification timestamp to prevent sync loops
@@ -167,8 +149,9 @@ begin
             DateTimeToUnixTime(RemoteEntries[I].ModifiedUtc));
 
           Inc(Result.Received);
-          ConsoleWrite(FormatUtf8(SCaptionFileReceived,
-            [RelPath, FormatFileSize(RemoteEntries[I].Size)]), ccLightCyan);
+          if Assigned(OnLog) then
+            OnLog(FormatUtf8(SCaptionFileReceived,
+              [RelPath, FormatFileSize(RemoteEntries[I].Size)]));
 
           EntriesLock^.Lock;
           try
@@ -212,7 +195,8 @@ begin
       Watcher.SuppressPath(ARelPath);
     try
       DeleteFile(FullPath);
-      ConsoleWrite(FormatUtf8(SCaptionFileRemoteDeleted, [ARelPath]), ccLightRed);
+      if Assigned(OnLog) then
+        OnLog(FormatUtf8(SCaptionFileRemoteDeleted, [ARelPath]));
 
       EntriesLock^.Lock;
       try

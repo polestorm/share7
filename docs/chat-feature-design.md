@@ -68,7 +68,7 @@ Backward compatible — old versions reject unknown message kinds.
 
 ## Verification Plan
 
-1. Build both variants: `build.bat` and `build_d7.bat`
+1. Build both variants: `scripts\build.bat` and `scripts\build_d7.bat`
 2. Run two instances on same network (or same machine with two consoles)
 3. Type a message + Enter on one — verify it appears on the other
 4. Verify file sync still works while chatting

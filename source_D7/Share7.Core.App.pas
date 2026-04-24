@@ -236,6 +236,7 @@ begin
     Exit;
   FLastSyncTick := Tick;
 
+  SetLength(Peers, 0);
   Peers := FDiscovery.GetPeerList;
   for I := 0 to High(Peers) do
     if Peers[I].IP = APeerIP then
@@ -294,6 +295,7 @@ begin
   if Count = FLastPeerCount then
     Exit;
   FLastPeerCount := Count;
+  SetLength(Peers, 0);
   if Count = 0 then
     ConsoleWrite(FormatUtf8('[%] ' + SCaptionNoPeers,
       [TimeStampStr]), ccDarkGray)

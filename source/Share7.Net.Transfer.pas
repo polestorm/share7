@@ -14,6 +14,8 @@ type
   TOnDeleteNotify = procedure(const ARelPath: RawUtf8) of object;
   TOnChangesNotify = procedure(const APeerIP: RawUtf8; ATcpPort: Word) of object;
   TOnClipboardNotify = procedure(const AText: RawUtf8) of object;
+  TOnScreenFrameNotify = procedure(const APeerName: RawUtf8;
+    const AData: TBytes) of object;
   /// Progress callback: received bytes, total bytes.
   TTransferProgress = reference to procedure(AReceived, ATotal: Int64);
 
@@ -28,11 +30,14 @@ type
     FOnDeleteNotify: TOnDeleteNotify;
     FOnChangesNotify: TOnChangesNotify;
     FOnClipboardNotify: TOnClipboardNotify;
-    procedure HandleClient(AClient: TCrtSocket);
+    FOnScreenFrame: TOnScreenFrameNotify;
+    procedure HandleClientWithCmd(AClient: TCrtSocket; ACmd: Byte);
     procedure HandleRequestFileList(AClient: TCrtSocket);
     procedure HandleRequestFile(AClient: TCrtSocket);
     procedure HandleNotifyDelete(AClient: TCrtSocket);
     procedure HandleNotifyClipboard(AClient: TCrtSocket);
+    procedure HandleScreenFrame(AClient: TCrtSocket;
+      ACallback: TOnScreenFrameNotify);
   protected
     procedure Execute; override;
   public
@@ -42,6 +47,7 @@ type
     property OnDeleteNotify: TOnDeleteNotify read FOnDeleteNotify write FOnDeleteNotify;
     property OnChangesNotify: TOnChangesNotify read FOnChangesNotify write FOnChangesNotify;
     property OnClipboardNotify: TOnClipboardNotify read FOnClipboardNotify write FOnClipboardNotify;
+    property OnScreenFrame: TOnScreenFrameNotify read FOnScreenFrame write FOnScreenFrame;
   end;
 
   /// Client-side TCP operations for syncing with a peer.
@@ -55,6 +61,8 @@ type
     class procedure SendChangesNotify(const AIP: RawUtf8; APort: Word); static;
     class procedure SendClipboardNotify(const AIP: RawUtf8; APort: Word;
       const AText: RawUtf8); static;
+    class function SendScreenFrame(const AIP: RawUtf8; APort: Word;
+      const APeerName: RawUtf8; const AData: TBytes): Boolean; static;
   end;
 
 implementation
@@ -105,7 +113,7 @@ begin
   FRootDir := ARootDir;
   FEntries := AEntries;
   FEntriesLock := AEntriesLock;
-  inherited Create(False);
+  inherited Create(True);
 end;
 
 procedure TTcpServerThread.Execute;
@@ -124,12 +132,39 @@ begin
       if FServerSock.Sock.Accept(ClientSock, ClientAddr, False) = nrOk then
       begin
         var Client := TCrtSocket.Create(IO_TIMEOUT);
-        try
-          Client.AcceptRequest(ClientSock, @ClientAddr);
-          Client.CreateSockIn;
-          HandleClient(Client);
-        finally
+        Client.AcceptRequest(ClientSock, @ClientAddr);
+        Client.CreateSockIn;
+
+        var Cmd: Byte;
+        if not RecvExact(Client, @Cmd, 1) then
+        begin
           Client.Free;
+          Continue;
+        end;
+
+        // Screen frames handled in separate thread to avoid blocking file ops
+        if Cmd = TCP_SCREEN_FRAME then
+        begin
+          var FrameClient := Client;
+          var Callback := FOnScreenFrame;
+          TThread.CreateAnonymousThread(
+            procedure
+            begin
+              try
+                HandleScreenFrame(FrameClient, Callback);
+              finally
+                FrameClient.Free;
+              end;
+            end
+          ).Start;
+        end
+        else
+        begin
+          try
+            HandleClientWithCmd(Client, Cmd);
+          finally
+            Client.Free;
+          end;
         end;
       end
       else
@@ -140,13 +175,9 @@ begin
   end;
 end;
 
-procedure TTcpServerThread.HandleClient(AClient: TCrtSocket);
+procedure TTcpServerThread.HandleClientWithCmd(AClient: TCrtSocket; ACmd: Byte);
 begin
-  var Cmd: Byte;
-  if not RecvExact(AClient, @Cmd, 1) then
-    Exit;
-
-  case Cmd of
+  case ACmd of
     TCP_REQUEST_FILE_LIST: HandleRequestFileList(AClient);
     TCP_REQUEST_FILE:      HandleRequestFile(AClient);
     TCP_NOTIFY_DELETE:     HandleNotifyDelete(AClient);
@@ -315,6 +346,7 @@ begin
     // Write to temp file, then rename
     var TmpPath := ADestPath + '.share7tmp';
     var Stream := TFileStream.Create(TmpPath, fmCreate);
+    var TransferOk := True;
     try
       var Buf: array[0..TRANSFER_BUFFER_SIZE - 1] of Byte;
       var Remaining := FileSize;
@@ -324,7 +356,10 @@ begin
         if Remaining < ToRead then
           ToRead := Integer(Remaining);
         if not RecvExact(Sock, @Buf[0], ToRead) then
-          Exit;
+        begin
+          TransferOk := False;
+          Break;
+        end;
         Stream.WriteBuffer(Buf[0], ToRead);
         Dec(Remaining, ToRead);
         if Assigned(AOnProgress) then
@@ -332,6 +367,12 @@ begin
       end;
     finally
       Stream.Free;
+    end;
+
+    if not TransferOk then
+    begin
+      System.SysUtils.DeleteFile(TmpPath);
+      Exit;
     end;
 
     // Atomic rename
@@ -410,6 +451,67 @@ begin
 
   if Assigned(FOnClipboardNotify) then
     FOnClipboardNotify(RawUtf8(Data));
+end;
+
+procedure TTcpServerThread.HandleScreenFrame(AClient: TCrtSocket;
+  ACallback: TOnScreenFrameNotify);
+begin
+  if not Assigned(ACallback) then
+    Exit;
+
+  // Read peer name
+  var NameLen: Word;
+  if not RecvExact(AClient, @NameLen, SizeOf(NameLen)) then
+    Exit;
+  if NameLen > 256 then
+    Exit;
+
+  var NameBuf: RawByteString;
+  SetLength(NameBuf, NameLen);
+  if (NameLen > 0) and not RecvExact(AClient, @NameBuf[1], NameLen) then
+    Exit;
+  var PeerName := RawUtf8(NameBuf);
+
+  // Read frame data
+  var DataLen: Cardinal;
+  if not RecvExact(AClient, @DataLen, SizeOf(DataLen)) then
+    Exit;
+  if DataLen = 0 then
+    Exit;
+  if DataLen > 50 * 1024 * 1024 then // 50 MB sanity limit
+    Exit;
+
+  var Data: TBytes;
+  SetLength(Data, DataLen);
+  if not RecvExact(AClient, @Data[0], DataLen) then
+    Exit;
+
+  ACallback(PeerName, Data);
+end;
+
+class function TTransferClient.SendScreenFrame(const AIP: RawUtf8; APort: Word;
+  const APeerName: RawUtf8; const AData: TBytes): Boolean;
+begin
+  Result := False;
+  var Sock := ConnectToPeer(AIP, APort);
+  if Sock = nil then
+    Exit;
+  try
+    var Cmd: Byte := TCP_SCREEN_FRAME;
+    if not SendRaw(Sock, @Cmd, 1) then Exit;
+
+    var NameLen: Word := Length(APeerName);
+    if not SendRaw(Sock, @NameLen, SizeOf(NameLen)) then Exit;
+    if (NameLen > 0) and not SendRaw(Sock, @APeerName[1], NameLen) then Exit;
+
+    var DataLen: Cardinal := Length(AData);
+    if not SendRaw(Sock, @DataLen, SizeOf(DataLen)) then Exit;
+    if (DataLen > 0) and not SendRaw(Sock, @AData[0], DataLen) then Exit;
+
+    Result := True;
+  finally
+    Sock.Free;
+  end;
 end;
 
 end.

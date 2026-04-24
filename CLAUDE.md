@@ -35,10 +35,10 @@ Share7.Sync.Engine.pas        -- Sync logic: merge, conflict resolution, deletio
 
 ```powershell
 # Main build
-powershell -Command "Set-Location 'source'; & '..\dcc32.bat' -B Share7.dpr"
+powershell -Command "Set-Location 'source'; & '..\scripts\dcc32.bat' -B Share7.dpr"
 
 # Or use the build script
-.\build.bat release
+.\scripts\build.bat release
 
 # Tests
 powershell -Command "Set-Location 'tests\source'; & '..\build.bat'"

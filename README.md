@@ -125,15 +125,15 @@ Both versions require [mORMot2](https://github.com/synopse/mORMot2) checked out 
 
 ```bash
 # Modern (Delphi 12/13) — from repo root
-build.bat            # release (default)
-build.bat debug      # debug
+scripts\build.bat            # release (default)
+scripts\build.bat debug      # debug
 
 # Compatible (Delphi 7+) — from repo root
-build_d7.bat         # release (default)
-build_d7.bat debug   # debug
+scripts\build_d7.bat         # release (default)
+scripts\build_d7.bat debug   # debug
 ```
 
-See `dcc32.bat` / `dcc32_d7.bat` for compiler paths and mORMot2 unit references.
+See `scripts\dcc32.bat` / `scripts\dcc32_d7.bat` for compiler paths and mORMot2 unit references.
 
 ## Credits
 

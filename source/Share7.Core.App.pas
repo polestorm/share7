@@ -43,6 +43,8 @@ type
     procedure OnRemoteClipboardReceived(const AText: RawUtf8);
     procedure DoSyncWithPeer(const APeer: TPeerInfo);
     procedure RescanAndUpdateManifest;
+    procedure OnSyncLog(const AMsg: RawUtf8);
+    procedure OnSyncProgress(const ARelPath: RawUtf8; AReceived, ATotal: Int64);
   public
     constructor Create;
     destructor Destroy; override;
@@ -82,6 +84,8 @@ begin
   FSyncEngine.Entries := @FEntries;
   FSyncEngine.EntriesLock := @FEntriesLock;
   FSyncEngine.Watcher := nil; // set after watcher is created
+  FSyncEngine.OnLog := OnSyncLog;
+  FSyncEngine.OnProgress := OnSyncProgress;
 end;
 
 destructor TShare7App.Destroy;
@@ -243,6 +247,33 @@ begin
     MessageBeep(MB_OK);
 end;
 
+procedure TShare7App.OnSyncLog(const AMsg: RawUtf8);
+begin
+  ConsoleWrite(FormatUtf8('[%] %', [TimeStampStr, AMsg]), ccLightCyan);
+end;
+
+procedure TShare7App.OnSyncProgress(const ARelPath: RawUtf8;
+  AReceived, ATotal: Int64);
+const
+  BAR_WIDTH = 20;
+begin
+  if ATotal <= 0 then
+    Exit;
+  var Pct := (AReceived * 100) div ATotal;
+  var Filled := (AReceived * BAR_WIDTH) div ATotal;
+  var Bar: RawUtf8;
+  SetLength(Bar, BAR_WIDTH);
+  for var J := 1 to BAR_WIDTH do
+    if J <= Filled then
+      Bar[J] := '#'
+    else
+      Bar[J] := '.';
+  var Line := FormatUtf8(SCaptionFileProgress, [ARelPath, Bar, Pct, '%']);
+  while Length(Line) < 78 do
+    Line := Line + ' ';
+  ConsoleWriteRaw(#13 + Line, True);
+end;
+
 procedure TShare7App.RescanAndUpdateManifest;
 begin
   var NewEntries: TFileEntries;
@@ -295,18 +326,20 @@ begin
   ConsoleWrite(FormatUtf8('[%] ' + SCaptionFoundFiles,
     [TimeStampStr, Length(FEntries)]), ccDarkGray);
 
-  // Start TCP server
+  // Create TCP server (suspended — assign callbacks before starting)
   FTcpServer := TTcpServerThread.Create(FConfig.TcpPort, FConfig.Folder,
     @FEntries, @FEntriesLock);
   FTcpServer.OnDeleteNotify := OnDeleteNotify;
   FTcpServer.OnChangesNotify := OnChangesNotify;
   if FConfig.Clipboard then
     FTcpServer.OnClipboardNotify := OnRemoteClipboardReceived;
+  FTcpServer.Start;
 
-  // Start UDP discovery
+  // Create UDP discovery (suspended — assign callbacks before starting)
   FDiscovery := TDiscoveryThread.Create(FConfig.Name, FConfig.UdpPort, FConfig.TcpPort);
   FDiscovery.OnPeerDiscovered := OnPeerDiscovered;
   FDiscovery.OnPeerLost := OnPeerLost;
+  FDiscovery.Start;
 
   // Start file watcher
   FWatcher := TFileWatcher.Create(FConfig.Folder);

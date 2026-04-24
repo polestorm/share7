@@ -9,9 +9,9 @@ echo.
 set RELEASE_FLAGS=
 if "%MODE%"=="release" set RELEASE_FLAGS=-$O+ -$R- -$Q- -$D- -$L- -$Y- -$C-
 
-pushd "%~dp0source_D7"
+pushd "%~dp0..\source_D7"
 
-call "..\dcc32_d7.bat" -B %RELEASE_FLAGS% Share7.dpr
+call "..\scripts\dcc32_d7.bat" -B %RELEASE_FLAGS% Share7.dpr
 set BUILD_RESULT=%ERRORLEVEL%
 popd
 
@@ -21,8 +21,8 @@ if %BUILD_RESULT% NEQ 0 (
   exit /b %BUILD_RESULT%
 )
 
-if exist "%~dp0program_D7\Share7.exe" (
-  for %%A in ("%~dp0program_D7\Share7.exe") do echo BUILD SUCCESS: Share7.exe [%%~zA bytes]
+if exist "%~dp0..\program_D7\Share7.exe" (
+  for %%A in ("%~dp0..\program_D7\Share7.exe") do echo BUILD SUCCESS: Share7.exe [%%~zA bytes]
 ) else (
   echo BUILD FAILED: Share7.exe not found
   exit /b 1
